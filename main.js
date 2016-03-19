@@ -27,11 +27,9 @@ let HOTWIRE_KEY     = secrets.HOTWIRE_KEY;
 let INSTAGRAM_TOKEN = secrets.INSTAGRAM_TOKEN;
 let CONN_STRING     = secrets.CONN_STRING;
 
-
 let average = function(arr) {
   return arr.reduce((curr, prev) => (curr+prev)) / arr.length;
 };
-
 
 
 let getAverageHotelRating = function(LL) {
