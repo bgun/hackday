@@ -1,0 +1,14 @@
+# OS X
+.DS_Store
+
+# IDE
+.idea/
+
+# Node
+node_modules/
+
+*.log
+
+# API keys, DB passwords etc.
+secrets.json
+
