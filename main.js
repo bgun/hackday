@@ -114,7 +114,7 @@ let getInstagramInfo = function(LL) {
     let query = qs.stringify({
       lat: LL[0],
       lng: LL[1],
-      count: 100,
+      count: 500,
       access_token: INSTAGRAM_TOKEN
     });
     let url = 'https://api.instagram.com/v1/media/search?'+query;
@@ -138,7 +138,7 @@ let googleLocations = function(LL) {
   return new Promise((resolve, reject) => {
     var places = new GoogleLocations(secrets.GOOGLE_KEY);
     let params = {
-      radius: 5000,
+      radius: 2000,
       location: LL,
       type: ['store']
     };
@@ -149,7 +149,7 @@ let googleLocations = function(LL) {
       let results = response.results;
       console.log("Got Google results");
       let avg_rating = average(results.map(r => r.rating));
-      let prices = results.map(r => { return (r.price_level || 2); });
+      let prices = results.filter(r => (r.price_level ? true : false)).map(r => { return (r.price_level); });
       console.log(prices);
       let avg_price  = average(prices);
       resolve({
@@ -221,7 +221,7 @@ let getData = function(LL) {
 let makeScores = function(data) {
   console.log("Making scores!");
   let friendly    = data.livability;
-  let interesting = normalize(data.instagram_count, 10, 70);
+  let interesting = normalize(data.instagram_count, 10, 120);
   let safety1     = normalize(data.avg_hotel_rating, 2.2, 3.7);
   let safety2     = data.nearby_crimes ? invert(normalize(data.nearby_crimes, 1, 50)) : 50;
   let safety      = average([safety1, safety2]);
