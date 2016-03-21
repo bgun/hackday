@@ -7,6 +7,7 @@
 
 import express from 'express';
 import fs      from 'fs';
+import qs      from 'qs';
 import request from 'superagent';
 import jsdom   from 'jsdom';
 
@@ -49,18 +50,20 @@ let normalize = function(num, min, max) {
 
 let getAverageHotelRating = function(LL) {
   return new Promise((resolve, reject) => {
+    let query = qs.stringify({
+      apikey: HOTWIRE_KEY,
+      dest: LL.join(','),
+      rooms: 1,
+      adults: 2,
+      children: 0,
+      startdate: "04/20/2016",
+      enddate: "04/23/2016",
+      format: "json"
+    });
+    let url = "http://api.hotwire.com/v1/search/hotel?"+query;
+    console.log(url);
     request
-      .get("http://api.hotwire.com/v1/search/hotel")
-      .query({
-        apikey: HOTWIRE_KEY,
-        dest: LL.join(','),
-        rooms: 1,
-        adults: 2,
-        children: 0,
-        startdate: "04/20/2016",
-        enddate: "04/23/2016",
-        format: "json"
-      })
+      .get(url)
       .end((err, resp) => {
         if (err) {
           reject(err);
@@ -107,14 +110,16 @@ let scrapeAreaVibes = function(LL) {
 
 let getInstagramInfo = function(LL) {
   return new Promise(function(resolve, reject) {
+    let query = qs.stringify({
+      lat: LL[0],
+      lng: LL[1],
+      count: 100,
+      access_token: INSTAGRAM_TOKEN
+    });
+    let url = 'https://api.instagram.com/v1/media/search?'+query;
+    console.log(url);
     request
-      .get('https://api.instagram.com/v1/media/search')
-      .query({
-        lat: LL[0],
-        lng: LL[1],
-        count: 100,
-        access_token: INSTAGRAM_TOKEN
-      })
+      .get(url)
       .end((err, resp) => {
         if (err) {
           reject(err);
@@ -196,9 +201,9 @@ let getData = function(LL) {
 let makeScores = function(data) {
   console.log("Making scores!");
   let friendly    = data.livability;
-  let interesting = normalize(data.instagram_count, 10, 110);
-  let safety      = normalize(data.avg_hotel_rating, 2, 5);
-  let value       = invert(normalize(data.google_avg_price, 1, 3));
+  let interesting = normalize(data.instagram_count, 10, 70);
+  let safety      = normalize(data.avg_hotel_rating, 2.2, 3.7);
+  let value       = invert(normalize(data.google_avg_price, 1.8, 3.5));
   return {
     friendly    : friendly,
     interesting : interesting,
