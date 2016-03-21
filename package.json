@@ -2,6 +2,7 @@
   "name": "hackday",
   "version": "1.0.0",
   "description": "Citymaps Hack Day 0",
+  "repository": "https://github.com/bgun/hackday",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
