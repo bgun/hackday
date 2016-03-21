@@ -58,7 +58,8 @@
             color: white;
             line-height: 30px;
             text-align: center;
-            width: 30%;
+            transition: all 0.5s;
+            width: 0%;
         }
     </style>
 </head>
@@ -109,7 +110,19 @@
     var safetyBar      = document.getElementById('bar-safety').children[0];
     var valueBar       = document.getElementById('bar-value').children[0];
 
+    var resetScores = function() {
+	friendlyBar.innerText    = 0;
+	friendlyBar.style        = "width: 0%";
+	interestingBar.innerText = 0;
+	interestingBar.style     = "width: 0%";
+	safetyBar.innerText      = 0;
+	safetyBar.style          = "width: 0%";
+	valueBar.innerText       = 0;
+	valueBar.style           = "width: 0%";
+    }
+
     var doData = function(lat, lon) {
+        resetScores();
         if (!lat || !lon) {
             throw new Error("lat or lon is bad");
         }
