@@ -7,6 +7,7 @@
 
 import express from 'express';
 import fs      from 'fs';
+import pg      from 'pg';
 import qs      from 'qs';
 import request from 'superagent';
 import jsdom   from 'jsdom';
@@ -160,15 +161,31 @@ let googleLocations = function(LL) {
 };
 
 
-let sample_data = {
-  "avg_hotel_rating": 3.37546468401487,
-  "hotel_count": 269,
-  "instagram_count": 100,
-  "neighborhood_name": "West Village, New York, NY",
-  "livability": 83,
-  "google_avg_rating": 4.03,
-  "google_avg_price": 2.5
-};
+let nearbyCrimes = function(LL) {
+  return new Promise((resolve, reject) => {
+    const RADIUS_METERS = 300;
+    pg.connect(CONN_STRING, function(err, client, done) {
+      if (err) {
+        console.error("Error fetching client from pool", err);
+      }
+      let query = "SELECT * FROM public.crime WHERE ST_DWithin(Geography(ST_MakePoint(lon, lat)), Geography(ST_MakePoint("+LL[1]+","+LL[0]+")), "+RADIUS_METERS+")";
+      console.log("Crime query",query);
+      client.query(query, function(err, result) {
+        done();
+        if (err) {
+          reject(err);
+        } else {
+          console.log(result.rows.length);
+          resolve({
+            count: result.rows.length
+          });
+        }
+      });
+    });
+  });
+}
+
+
 
 let getData = function(LL) {
   //return Promise.resolve(sample_data);
@@ -176,12 +193,14 @@ let getData = function(LL) {
     getAverageHotelRating(LL),
     getInstagramInfo(LL),
     scrapeAreaVibes(LL),
-    googleLocations(LL)
+    googleLocations(LL),
+    nearbyCrimes(LL)
   ]).then(function(results) {
     let hotel = results[0] || {};
     let insta = results[1] || {};
     let vibes = results[2] || {};
     let googs = results[3] || {};
+    let crime = results[4] || {};
     return {
       avg_hotel_rating : hotel.average_rating,
       hotel_count      : hotel.count,
@@ -189,7 +208,8 @@ let getData = function(LL) {
       neighborhood_name: vibes.name,
       livability       : vibes.score,
       google_avg_rating: googs.avg_rating,
-      google_avg_price : googs.avg_price
+      google_avg_price : googs.avg_price,
+      nearby_crimes    : crime.count
     };
   })
   .catch(err => {
@@ -202,8 +222,11 @@ let makeScores = function(data) {
   console.log("Making scores!");
   let friendly    = data.livability;
   let interesting = normalize(data.instagram_count, 10, 70);
-  let safety      = normalize(data.avg_hotel_rating, 2.2, 3.7);
+  let safety1     = normalize(data.avg_hotel_rating, 2.2, 3.7);
+  let safety2     = data.nearby_crimes ? invert(normalize(data.nearby_crimes, 1, 50)) : 50;
+  let safety      = average([safety1, safety2]);
   let value       = invert(normalize(data.google_avg_price, 1.8, 3.5));
+
   return {
     friendly    : friendly,
     interesting : interesting,
@@ -231,7 +254,7 @@ server.get('/data', function(req, res) {
       });
     })
     .catch(err => {
-      throw err;
+      res.send(err);
     })
 });
 
@@ -243,20 +266,3 @@ server.get('/', function(req, res) {
 
 console.log("Server listening on port "+PORT);
 server.listen(PORT);
-
-/*
-pg.connect(CONN_STRING, function(err, client, done) {
-  if (err) {
-    console.error("Error fetching client from pool", err);
-  }
-  let query = "SELECT * FROM " + env.REGION_TABLE;
-  client.query(query, function(err, result) {
-    done();
-    if (err) {
-      ResponseManager.sendJsonResponse(res, err);
-    } else {
-      ResponseManager.sendJsonResponse(res, null, "regionsets", result.rows);
-    }
-  });
-});
-*/
