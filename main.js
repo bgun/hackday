@@ -205,10 +205,10 @@ let makeScores = function(data) {
     safety      : safety,
     value       : value
   };
-}
+};
 
 
-server.get('/', function(req, res) {
+server.get('/data', function(req, res) {
   console.log(req.query);
   if (!req.query.lat || !req.query.lon) {
     throw new Error("No location provided!");
@@ -228,6 +228,11 @@ server.get('/', function(req, res) {
     .catch(err => {
       throw err;
     })
+});
+
+
+server.get('/', function(req, res) {
+  res.sendFile(__dirname+'/index.html');
 });
 
 
